@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>Documentation: Elemental Monsters Design</title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="static/style.css">
+    </head>
+    <body class="row">
+        <nav id="navbar" class="column">
+            <div id="nav-header" class="column">
+                <header>Elemental Monsters<br>- Design -</header>
+            </div>
+            <div id="nav-list" class="scrollable">
+                <ul>
+                    <li><a class="nav-link" href="#Overview">Overview</a></li>
+                    <li><a class="nav-link" href="#The_Monsters">The Monsters</a></li>
+                    <li><a class="nav-link" href="#Code_Overview">Code Overview</a></li>
+                    <li><a class="nav-link" href="#The_Monster_Class">The Monster Class</a></li>
+                    <li><a class="nav-link" href="#The_Player_Class">The Player Class</a></li>
+                </ul>
+            </div>
+        </nav>
+        <main id="main-doc" class="column scrollable">
+            <section class="main-section" id="Overview">
+                <header>Overview</header>
+                <p>Elemental Monsters is a simple monster battler using a five element rock, papers, scissors inspired system.  The elements currently in use are:</p>
+                <ul>
+                    <li>Water</li>
+                    <li>Fire</li>
+                    <li>Earth</li>
+                    <li>Wind</li>
+                    <li>Death</li>
+                </ul>
+                <p>Each type has both a type which they have a "major" type advantage against, offering 25% additional damage, and a "minor" type advantage, offering 10% addition damage.  Visually, those relationships look like the following:</p>
+                <figure id="img-div">
+                    <img
+                      id="image"
+                      src="static/types.png"
+                      alt="Elemental relationships in Elemental Monsters"
+                    />
+                    <figcaption id="img-caption">
+                        There are five elemental types with "major" and "minor" type advantages.
+                    </figcaption>
+                  </figure>
+            </section>
+            <section class="main-section" id="The_Monsters">
+                <header>The Monsters</header>
+                <p>As stated already, monsters can be one of five types.  The way that both the types and monsters have been implemented should allow for the easy addition of either.  The types and damage modifiers are located in <a href="https://github.com/berubejd/ElementalMonsters/blob/master/dmgmodifiers.csv" target="_blank">dmgmodifiers.csv</a> and monster definitions are located in <a href="https://github.com/berubejd/ElementalMonsters/blob/master/monsterdata.csv" target="_blank">monsterdata.csv</a>.</p>
+                <p>The current configuration includes five common monsters, one of each type, three uncommon monsters, and two rare monsters.  These monsters were created to have better base stats as their rarity increases but this is not forced by the way the code is implemented.  The monsters available in the current game are:</p>
+                <code>
+    Name                    Element     Rarity	    Strength	Defense
+
+    Surf Crawler            Water       Common	    6	        4
+    Smouldering Creeper     Fire        Common	    7	        3
+    Terracotta Soldier      Earth       Common	    4	        6
+    Djinn                   Wind        Common	    5	        5
+    Shadow Stalker          Death       Common	    6	        4
+
+    Arctic Hound            Water       Uncommon    8	        6
+    Stone Golem             Earth       Uncommon    6	        8
+    Eastern Drake           Wind        Uncommon    7	        7
+
+    Cinder Abomination      Fire        Rare	    11	        7
+    Skeletal Wyvern         Death       Rare	    10	        8
+                </code>
+                <p>Once the player's tamed monster levels beyond level one, the monsters which you will encounter can be from two levels below to one level above your currently "tamed" monster.  That calculation is handled inside of the hunting function:</p>
+                <code>
+    # Provide a random monster between -2 and +1 levels of the players
+
+    if player.monster.level == 1:
+        monster = Monster.random_monster()
+    else:
+        min_level = max(player.monster.level - 2, 1)
+        max_level = min(player.monster.level + 1, 10)
+        monster = Monster.random_monster(level=random.randint(min_level, max_level))
+                </code>
+                <p>Both tamed and wild monsters can be a maximum of level ten.  The experience required per level increases on a curve and is defined within the <a href="#The_Monster_Class">monster class</a>.</p>
+                <p>Once a player defeats a monster in combat, they have the option to trade their current monster for the newly defeated monster.  This will release their existing monster back to the "wild", however, and any experience gained prior to capturing the new monster will be forfeited.</p>
+            </section>
+            <section class="main-section" id="Code_Overview">
+                <header>Code Overview</header>
+                <p>The code for Elemental Monsters is broken up into three main files:</p>
+                <ul>
+                    <li>The main program</li>
+                    <li>The monster class</li>
+                    <li>The player class</li>
+                </ul>
+                <p>The main program is primarily responsible for handling of player interaction.  This includes:</p>
+                <ul>
+                    <li>Interacting with the player class</li>
+                    <li>Displaying of town menus</li>
+                    <li>Managing the hunting and combat loops</li>
+                    <li>Capturing and processing player input</li>
+                    <li>Calling the player class to create player saves at important checkpoints</li>
+                </ul>
+                <p>While some of this funtionality, like handling player menus or adding multiple towns of different "tiers", could still use implementation, the program currently provides a complete player experience.</p>
+                <p>The <a href="#The_Monster_Class">Monster</a> and <a href="#The_Player_Class">Player</a> classes will be gone into in more detail in future sections of this document.</p>
+            </section>
+            <section class="main-section" id="The_Monster_Class">
+                <header>The Monster Class</header>
+                <p>The monster class wraps everything about a monster in a single place.  This includes:</p>
+                <ul>
+                    <li>Data loading</li>
+                    <li>Monster creation</li>
+                    <li>Random monster selection</li>
+                    <li>Attack success and damage</li>
+                    <li>Health removal and addition</li>
+                    <li>Experience awards and leveling</li>
+                </ul>
+                <p>The monster instance itself stores a fair bit of information upon initialization:</p>
+                <code>
+    def __init__(
+            self, 
+            name: str, 
+            element: str, 
+            description: str = '', 
+            tier: int = 1, 
+            level: int = 1, 
+            rarity: str = 'Common', 
+            strength: int = 1, 
+            defense: int = 1
+        ):
+
+        # Basic information
+        self.name = name
+        self.description = description
+        self.element = element
+        self.rarity = rarity
+        self.tier = int(tier)
+    
+        # Level and Experience
+        self.level = int(level)
+        self.experience = 0
+        self.experience_needed = self.get_experience_needed(int(level) + 1)
+    
+        # Strength - Attack and Defense - Armor
+        self.strength = int(strength) + trunc(int(level) / 2)
+        self.defense = int(defense)
+    
+        self.str_mod = trunc((self.strength - 10) / 2)
+    
+        self.attack = self.BASE_DMG + self.str_mod
+        self.armor = self.BASE_DEFENSE + self.defense
+    
+        # Hit Points
+        self.hp = sum(random.randint(self.MIN_HP_PER_LEVEL, self.MAX_HP_PER_LEVEL) for _ in range(self.level))
+        self.current_hp = self.hp
+                </code>
+                <p>There are a number of important methods to understand within the monster class such as:</p>
+                <ul>
+                    <li><a href="https://github.com/berubejd/ElementalMonsters/blob/master/monster.py#L108" target="_blank">Attack and Damage Calculation</a></li>
+                    <li><a href="https://github.com/berubejd/ElementalMonsters/blob/master/monster.py#L147" target="_blank">Level-up</a></li>
+                    <li><a href="https://github.com/berubejd/ElementalMonsters/blob/master/monster.py#L171" target="_blank">Experience Requirement Calculation</a></li>
+                </ul>
+            </section>
+            <section class="main-section" id="The_Player_Class">
+                <header>The Player Class</header>
+                <p>The final class to provide an overview of is the player class.  Much like the <a href="#The_Monster_Class">monster class</a>, the player class encompasses all the functionality required to manage the player.  This includes:</p>
+                <ul>
+                    <li>Player creation</li>
+                    <li>Initial player companion (monster) selection</li>
+                    <li>Save and load functionality</li>
+                </ul>
+                <p>The actual player instance stores a small amount of information:</p>
+                <code>
+    def __init__(self, name: str, monster: Monster):
+        self.created = datetime.now()
+        self.name = name
+        self.monster = monster
+        self.gold = 0
+        self.blessing = datetime.now()
+
+        self.savepath = Path(f'{self.save_dir}/{self.name}')
+                </code>
+                <p>The meat of the work occurs within the <a href="https://github.com/berubejd/ElementalMonsters/blob/master/player.py#L25" target="_blank">interactive</a> class method:</p>
+                <code>
+    @classmethod
+    def interactive(cls):
+        """Provide interactive constructor for player class"""
+                </code>
+                <p>This class method provides interactive initialization of the player instance.</p>
+                <ol>
+                    <li>The player is asked to enter their name.</li>
+                    <li>If a save game with that name exists, the player is provided a number of choices (load, overwrite, enter a new name).</li>
+                    <li>If the player chooses to continue with an existing save, it is loaded and returned to the main program.</li>
+                    <li>If no save exists or the player chooses to overwrite an existing save, the player is presented with three random common monster choices in <a href="https://github.com/berubejd/ElementalMonsters/blob/master/player.py#L73" target="_blank">select_monster</a>.</li>
+                    <li>This new monster instance is attached to the new player instance and the game begins.</li>
+                </ol>
+                <p>Finally, save and load functionality is provided by three methods within the player class:</p>
+                <ul>
+                    <li><a href="https://github.com/berubejd/ElementalMonsters/blob/master/player.py#L141" target="_blank">save_exists</a></li>
+                    <li><a href="https://github.com/berubejd/ElementalMonsters/blob/master/player.py#L114" target="_blank">save_player</a></li>
+                    <li><a href="https://github.com/berubejd/ElementalMonsters/blob/master/player.py#L129" target="_blank">load_player</a></li>
+                </ul>
+            </section>
+        </main>
+
+        <script src="https://cdn.freecodecamp.org/testable-projects-fcc/v1/bundle.js" async defer></script>
+    </body>
+</html>

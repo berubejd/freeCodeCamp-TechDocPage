@@ -1,0 +1,176 @@
+:root {
+    --bg-white: #F7F9Fb;
+    --bg-text: #202121;
+    --bg-code: #ededec;
+    --nav-hdr-blue: #5085A5;
+    --nav-bg-blue: #99b8d0;
+}
+
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+    font-size: 10px;
+}
+
+body {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    overflow: hidden;
+    background-color: var(--bg-white);
+    color: var(--bg-text);
+    font-size: 1.8rem;
+    line-height: 1.5;
+}
+
+nav {
+    height: 100%;
+    width: 300px;
+    max-width: 300px;
+    padding: 2px;
+    position: fixed;
+    top: 0;
+}
+
+header {
+    font-size: 2.5rem;
+    font-weight: bolder;
+}
+
+p {
+    margin: 2rem 1rem;
+}
+
+li {
+    margin: .25rem 1rem 0 3rem;
+}
+
+#nav-header {
+    min-height: 100px;
+    max-height: 100px;
+    margin-bottom: 2px;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    background-color: var(--nav-hdr-blue);
+    color: var(--bg-white);
+}
+
+#nav-list {
+    height: 100%;
+    padding-bottom: 2px;
+    background-color: var(--nav-bg-blue);
+    color: var(--bg-white);
+}
+
+#nav-list > ul {
+    list-style: none;
+}
+
+#nav-list li {
+    font-size: 2rem;
+}
+
+#nav-list a {
+    color: var(--bg-white);
+    text-decoration: none;
+}
+
+main {
+    height: 100%;
+    margin-left: 300px;
+    padding: 2em;
+    background-color: var(--bg-white);
+    color: var(--bg-text);
+}
+
+figure {
+    font-size: 1.4rem;
+    text-align: center;
+}
+
+img {
+    border: 2px solid var(--bg-text);
+}
+
+code {
+    display: block;
+    text-align: left;
+    white-space: pre;
+    position: relative;
+    word-break: normal;
+    word-wrap: normal;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 1.3rem;
+    background-color: var(--bg-code);
+    margin: 0 4rem 0 2rem;
+    border-radius: 5px;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+}
+  
+.column {
+    display: flex;
+    flex-direction: column;
+    flex-basis: 100%;
+    flex: 1;
+}
+
+.scrollable {
+    overflow-y: auto;
+}
+
+@media (max-width: 550px) {
+    body {
+        max-width: 500px;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+
+    nav {
+        height: auto;
+        max-width: 100%;
+        position: initial;
+        top: auto;
+    }
+
+    #nav-list {
+        height: initial;
+    }
+
+    main {
+        margin-left: auto;
+    }
+
+    img {
+        max-width: 200px;
+        height: auto;
+    }
+
+    code {
+        width: 400px;
+        white-space: pre-line;
+    }
+
+    .column {
+        flex: auto;
+    }
+
+    .scrollable {
+        overflow: initial;
+    }
+}
